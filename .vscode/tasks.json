@@ -10,7 +10,8 @@
                 "${file}",
                 "-o",
                 "${fileDirname}/${fileBasenameNoExtension}",
-                "-lcurl"
+                "-lcurl",
+                "-lgumbo"
             ],
             "options": {
                 "cwd": "${fileDirname}"
