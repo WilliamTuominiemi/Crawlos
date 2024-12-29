@@ -41,7 +41,16 @@ void extractLinks(GumboNode *node, std::vector<std::string> &links)
         GumboAttribute *href = gumbo_get_attribute(&node->v.element.attributes, "href");
         if (href)
         {
-            links.push_back(href->value);
+            std::string url = std::string(href->value);
+
+            if (url.substr(0, 4) == "http" && url.find('.') != std::string::npos)
+            {
+                if (url.back() == '/')
+                {
+                    url.pop_back();
+                }
+                links.push_back(url);
+            }
         }
     }
 
