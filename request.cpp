@@ -3,6 +3,8 @@
 #include <curl/curl.h>
 #include <gumbo.h>
 #include <vector>
+#include <queue>
+#include <set>
 
 size_t WriteCallback(void *contents, size_t size, size_t nmemb, std::string *data)
 {
@@ -70,25 +72,56 @@ std::vector<std::string> parseHTML(const std::string &html)
     return links;
 }
 
+void crawl(const std::string &startURL, int maxDepth)
+{
+    std::queue<std::pair<std::string, int>> urlQueue;
+    std::set<std::string> visited;
+
+    urlQueue.push({startURL, 0});
+    visited.insert(startURL);
+
+    while (!urlQueue.empty())
+    {
+        auto [currentURL, depth] = urlQueue.front();
+        urlQueue.pop();
+
+        if (depth > maxDepth)
+            continue;
+
+        std::cout << "\nCrawling: " << currentURL << " at depth " << depth << std::endl;
+
+        std::string content = fetchURL(currentURL);
+        if (content.empty())
+        {
+            std::cerr << "Failed to fetch content for: " << currentURL << std::endl;
+            continue;
+        }
+
+        std::vector<std::string> links = parseHTML(content);
+
+        std::cout << "Found " << links.size() << " links:" << std::endl;
+        for (const auto &link : links)
+        {
+            std::cout << "  " << link << std::endl;
+
+            if (visited.find(link) == visited.end())
+            {
+                urlQueue.push({link, depth + 1});
+                visited.insert(link);
+            }
+        }
+    }
+
+    std::cout << "\nCrawling complete. Visited " << visited.size() << " URLs." << std::endl;
+}
+
 int main()
 {
-    std::string url = "https://crawler-test.com/links/page_with_external_links";
-    std::cout << "Fetching URL: " << url << std::endl;
+    std::string startURL = "https://webscraper.io/test-sites/e-commerce/allinone";
+    int maxDepth = 2;
 
-    std::string content = fetchURL(url);
-    if (content.empty())
-    {
-        std::cerr << "Failed to fetch content" << std::endl;
-        return 1;
-    }
-
-    std::vector<std::string> links = parseHTML(content);
-
-    std::cout << "\nFound " << links.size() << " links:" << std::endl;
-    for (const auto &link : links)
-    {
-        std::cout << link << std::endl;
-    }
+    std::cout << "Starting crawler from: " << startURL << std::endl;
+    crawl(startURL, maxDepth);
 
     return 0;
 }
